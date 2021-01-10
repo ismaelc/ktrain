@@ -74,7 +74,9 @@ class QA(ABC):
 
 
     @abstractmethod
-    def search(self, query):
+    def search(self, query
+    
+    ):
         pass
 
     def predict_squad(self, documents, question):
@@ -189,7 +191,7 @@ class QA(ABC):
 
 
     def ask(self, question, batch_size=8, n_docs_considered=10, n_answers=50, 
-            rerank_threshold=0.015, include_np=False):
+            rerank_threshold=0.015, include_np=False, q_grouping=0.9):
         """
         submit question to obtain candidate answers
 
@@ -215,6 +217,9 @@ class QA(ABC):
                              and the answers returned pertain just to intelligence, for example.
                              Note: include_np=True requires textblob be installed.
                              Default:False
+          q_grouping: Between 0-1. Determines the grouping factor of the words to search the index.
+                      Default: 0.9
+
         Returns:
           list
         """
@@ -222,7 +227,8 @@ class QA(ABC):
         paragraphs = []
         refs = []
         #doc_results = self.search(question, limit=n_docs_considered)
-        doc_results = self.search(_process_question(question, include_np=include_np), limit=n_docs_considered)
+        doc_results = self.search(_process_question(question, include_np=include_np), limit=n_docs_considered, 
+            group_bonus=q_grouping)
         if not doc_results: 
             warnings.warn('No documents matched words in question')
             return []
@@ -510,7 +516,7 @@ class SimpleQA(QA):
         return
 
 
-    def search(self, query, limit=10):
+    def search(self, query, limit=10, group_bonus=0.9):
         """
         search index for query
         Args:
@@ -521,7 +527,8 @@ class SimpleQA(QA):
         """
         ix = self._open_ix()
         with ix.searcher() as searcher:
-            query_obj = QueryParser("content", ix.schema, group=qparser.OrGroup).parse(query)
+            og = qparser.OrGroup.factory(group_bonus)
+            query_obj = QueryParser("content", ix.schema, group=og).parse(query)
             results = searcher.search(query_obj, limit=limit)
             docs = []
             output = [dict(r) for r in results]
