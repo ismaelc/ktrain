@@ -74,7 +74,7 @@ class QA(ABC):
 
 
     @abstractmethod
-    def search(self, query, q_grouping
+    def search(self, query, group_bonus
     
     ):
         pass
