@@ -7,6 +7,7 @@ from .. import preprocessor as tpp
 from whoosh import index
 from whoosh.fields import *
 from whoosh import qparser
+from whoosh import scoring
 from whoosh.qparser import QueryParser
 
 
@@ -526,7 +527,7 @@ class SimpleQA(QA):
           list of dicts with keys: reference, rawtext
         """
         ix = self._open_ix()
-        with ix.searcher() as searcher:
+        with ix.searcher(weighting=scoring.TF_IDF()) as searcher:
             og = qparser.OrGroup.factory(group_bonus)
             query_obj = QueryParser("content", ix.schema, group=og).parse(query)
             results = searcher.search(query_obj, limit=limit)
